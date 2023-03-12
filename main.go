@@ -2,7 +2,11 @@ package main
 
 import (
 	"log"
+	"net/http"
 
+	"github.com/rosricard/userAccess/handlers"
+
+	"github.com/go-chi/chi"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -57,10 +61,20 @@ func NewRepository(db *gorm.DB) (*Repository, error) {
 }
 
 func main() {
-	config := new(Config)
-	_, err := NewRepository(config.Database())
+	// config := new(Config)
+	// newRepo, err := NewRepository(config.Database())
+	// if err != nil {
+	// 	//Config.logger.Fatal(err)
+	// 	print(err)
+	// }
+	// print(newRepo)
+
+	// run server locally
+	router := chi.NewRouter()
+	router.Get("/api/jobs", handlers.GetJobs)
+	//run it on port 8080
+	err := http.ListenAndServe("0.0.0.0:8080", router)
 	if err != nil {
-		//Config.logger.Fatal(err)
-		print(err)
+		log.Fatal(err)
 	}
 }
