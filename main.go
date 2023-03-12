@@ -4,10 +4,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/rosricard/userAccess/handlers"
-
 	"github.com/go-chi/chi"
-
+	"github.com/rosricard/userAccess/database"
+	"github.com/rosricard/userAccess/handlers"
 	"gorm.io/gorm"
 )
 
@@ -28,6 +27,9 @@ func main() {
 	// }
 	// print(newRepo)
 
+	//initialize the database
+	database.InitDB()
+
 	// run server locally
 	router := chi.NewRouter()
 	router.Get("/api/jobs", handlers.GetJobs)
@@ -36,5 +38,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	//close db connection when you are done
+	//defer database.DBCon.Close()
 
 }

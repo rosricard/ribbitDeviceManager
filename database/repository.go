@@ -5,9 +5,9 @@ import (
 	"gorm.io/gorm"
 )
 
-// var (
-// 	dbCon *gorm.DB
-// )
+var (
+	DBCon *gorm.DB
+)
 
 type Repository struct {
 	users *UserRepo
@@ -25,7 +25,9 @@ func InitDB() {
 
 	//connect to mysql database
 	dsn := "root:password@tcp(127.0.0.1:3306)/ribbit?charset=utf8mb4&parseTime=True&loc=Local"
-	dbCon, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	//DBCon, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+
+	DBCon, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 
 	//where myhost is port is the port postgres is running on
 	//user is your postgres use name
@@ -33,7 +35,7 @@ func InitDB() {
 	if err != nil {
 		panic("failed to connect database")
 	}
-	print(dbCon)
+	print(DBCon)
 
 }
 
