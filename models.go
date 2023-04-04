@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type User struct {
+type UserDB struct {
 	ID               string `gorm:"column:id;primary_key"`
 	Name             string `gorm:"column:name"`
 	CreatedAt        time.Time
@@ -15,7 +15,7 @@ type User struct {
 	SensorPrivateKey string `gorm:"column:private_key"`
 }
 
-func (u *User) BeforeSave(tx *gorm.DB) (err error) {
+func (u *UserDB) BeforeSave(tx *gorm.DB) (err error) {
 	fmt.Printf("User BeforeSave: %+v\n", u)
 	return
 }

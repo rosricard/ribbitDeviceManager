@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"time"
 
 	"gorm.io/driver/mysql"
@@ -11,6 +12,11 @@ import (
 var dsn = "root:password@tcp(127.0.0.1:3306)/ribbit?charset=utf8mb4&parseTime=True&loc=Local"
 
 func main() {
+	// create web server
+	srv := NewServer()
+	http.ListenAndServe(":8080", srv)
+
+	// gorm for db read / write
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic(err)
@@ -27,32 +33,35 @@ func main() {
 
 }
 
+func handler(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("hello, world")
+}
 func AutoMigrate(db *gorm.DB) {
-	db.AutoMigrate(&User{})
+	db.AutoMigrate(&UserDB{})
 }
 
 func CreateUser(db *gorm.DB) {
-	users := []User{
+	users := []UserDB{
 		{
-			ID:               "USER.ID.1",
-			Name:             "USER.NAME.1",
+			ID:               "USER_ID.1",
+			Name:             "USER_NAME.1",
 			CreatedAt:        time.Now(),
-			Password:         "USER.PASSWORD.1",
-			SensorPrivateKey: "PRIVATE.KEY.1",
+			Password:         "USER_PASSWORD.1",
+			SensorPrivateKey: "PRIVATE_KEY.1",
 		},
 		{
-			ID:               "USER.ID.2",
-			Name:             "USER.NAME.2",
+			ID:               "USER_ID.2",
+			Name:             "USER_NAME.2",
 			CreatedAt:        time.Now(),
-			Password:         "USER.PASSWORD.2",
-			SensorPrivateKey: "PRIVATE.KEY.2",
+			Password:         "USER_PASSWORD.2",
+			SensorPrivateKey: "PRIVATE_KEY.2",
 		},
 		{
-			ID:               "USER.ID.3",
-			Name:             "USER.NAME.3",
+			ID:               "USER_ID.3",
+			Name:             "USER_NAME.3",
 			CreatedAt:        time.Now(),
-			Password:         "USER.PASSWORD.3",
-			SensorPrivateKey: "PRIVATE.KEY.3",
+			Password:         "USER_PASSWORD.3",
+			SensorPrivateKey: "PRIVATE_KEY.3",
 		},
 	}
 	res := db.Create(&users)
@@ -62,4 +71,5 @@ func CreateUser(db *gorm.DB) {
 	for _, user := range users {
 		fmt.Printf("school.ID: %d\n", user.ID)
 	}
+
 }
