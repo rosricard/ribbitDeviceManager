@@ -2,7 +2,6 @@ package api
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/gofrs/uuid"
@@ -35,30 +34,14 @@ func NewServer() *Server {
 	return s
 }
 
-func (s *Server) routes() *Server {
-
-	r := mux.NewRouter().StrictSlash(true)
-	r.HandleFunc("/allUsers", s.GetUsers()).Methods("GET") // To request all users
+func (s *Server) routes() {
+	s.HandleFunc("/allUsers", s.GetUsers()).Methods("GET") // To request all users
 	// r.HandleFunc("/user/{name}", user).Methods("GET")             // To request a specific user
 	// r.HandleFunc("createUser", CreateUser).Methods("POST") // To create a new user
 	// r.HandleFunc("deleteUser", DeleteUser).Methods("DELETE")      // To delete a user
 	// r.HandleFunc("changePassword", ChangePassword).Methods("PUT") // To change a user's password
 	// s := NewServer()
 	// s.HandleFunc("/api/users", s.CreateUser()).Methods(http.MethodPost)
-	log.Fatal(http.ListenAndServe(":10000", r))
-	return nil
-}
-
-func corsHandler(h http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-		if r.Method == "OPTIONS" {
-			return
-		}
-		h(w, r)
-	}
 }
 
 func (s *Server) GetUsers() http.HandlerFunc {
@@ -69,7 +52,6 @@ func (s *Server) GetUsers() http.HandlerFunc {
 		}
 		db.GetAllUsers(dbConn)
 		fmt.Println("Endpoint hit: returnAllUsers")
-
 	}
 }
 
