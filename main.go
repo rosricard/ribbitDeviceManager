@@ -1,9 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/rosricard/userAccess/api"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -13,7 +14,7 @@ var dsn = "root:password@tcp(127.0.0.1:3306)/ribbit?charset=utf8mb4&parseTime=Tr
 
 func main() {
 	// create web server
-	srv := NewServer()
+	srv := api.NewServer()
 	http.ListenAndServe(":8080", srv)
 
 	// gorm for db read / write
@@ -28,11 +29,7 @@ func main() {
 	sqldb.SetMaxIdleConns(10)
 	sqldb.SetMaxOpenConns(100)
 	sqldb.SetConnMaxLifetime(time.Second * 30)
-	AutoMigrate(db)
-	CreateUser(db)
+	db.AutoMigrate(db)
+	api.NewServer().GetUsers()
 
-}
-
-func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("hello, world")
 }

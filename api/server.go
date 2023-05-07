@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"fmt"
@@ -7,9 +7,12 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/gorilla/mux"
+	"github.com/rosricard/userAccess/db"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
+
+var dsn = "root:password@tcp(127.0.0.1:3306)/ribbit?charset=utf8mb4&parseTime=True&loc=Local"
 
 type user struct {
 	ID       uuid.UUID `json:"id"`
@@ -28,13 +31,14 @@ func NewServer() *Server {
 		Router: mux.NewRouter(),
 		users:  []user{},
 	}
+	s.routes()
 	return s
 }
 
-func APIServer(url string, port string) *Server {
+func (s *Server) routes() *Server {
 
 	r := mux.NewRouter().StrictSlash(true)
-	r.HandleFunc("/allUsers", getUsers) // To request all users
+	r.HandleFunc("/allUsers", s.GetUsers()).Methods("GET") // To request all users
 	// r.HandleFunc("/user/{name}", user).Methods("GET")             // To request a specific user
 	// r.HandleFunc("createUser", CreateUser).Methods("POST") // To create a new user
 	// r.HandleFunc("deleteUser", DeleteUser).Methods("DELETE")      // To delete a user
@@ -57,30 +61,17 @@ func corsHandler(h http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func getUsers(w http.ResponseWriter, r *http.Request) {
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
-	if err != nil {
-		panic(err)
-	}
-	GetAllUsers(db)
-	fmt.Println("Endpoint hit: returnAllGroceries")
-}
+func (s *Server) GetUsers() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		dbConn, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+		if err != nil {
+			panic(err)
+		}
+		db.GetAllUsers(dbConn)
+		fmt.Println("Endpoint hit: returnAllUsers")
 
-// func getUsers(w http.ResponseWriter, r *http.Request) http.HandlerFunc {
-// 	return func(w http.ResponseWriter, r *http.Request) {
-// 		switch r.Method {
-// 		case http.MethodGet:
-// 			// gorm for db read / write
-// 			db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
-// 			if err != nil {
-// 				panic(err)
-// 			}
-// 			GetAllUsers(db)
-// 		default:
-// 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-// 		}
-// 	}
-// }
+	}
+}
 
 // func CreateUser(w http.ResponseWriter, r *http.Request) http.HandlerFunc {
 // 	return func(w http.ResponseWriter, r *http.Request) {
