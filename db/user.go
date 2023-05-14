@@ -4,16 +4,45 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gofrs/uuid"
+	"github.com/rosricard/userAccess/model"
 	"gorm.io/gorm"
 )
+
+type UserDB struct {
+	ID               string `gorm:"column:id;primary_key"`
+	Name             string `gorm:"column:name"`
+	CreatedAt        time.Time
+	Password         string `gorm:"column:password"`
+	SensorPrivateKey string `gorm:"column:private_key"`
+}
 
 type UserRepo struct {
 	db *gorm.DB
 }
 
-// AutoMigrate will automatically migrate the database and correcrt schema errors on startup
-func AutoMigrate(db *gorm.DB) {
-	db.AutoMigrate(&UserDB{})
+// TableName sets the table name for the UserDB model
+func (UserDB) TableName() string {
+	return "users"
+}
+
+// NewUserRepo initializes a new instance of the [UserRepo] type
+func NewUserRepo(db *gorm.DB) *UserRepo {
+	return &UserRepo{db}
+}
+
+// ToModel maps the database user model to the graphQL user model
+func (u *UserDB) ToModel() *model.User {
+	string_uuid, err := uuid.FromString(u.ID)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return &model.User{
+		ID:       string_uuid,
+		Name:     u.Name,
+		Password: u.Password,
+	}
 }
 
 // getAllUsers requests a list of users from the database
