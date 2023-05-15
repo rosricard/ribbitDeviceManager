@@ -15,8 +15,8 @@ var dsn = "root:password@tcp(127.0.0.1:3306)/ribbit?charset=utf8mb4&parseTime=Tr
 
 type Server struct {
 	*mux.Router
-
 	users []model.User
+	repo  *db.UserRepo
 }
 
 func NewServer() *Server {
@@ -34,7 +34,7 @@ func (s *Server) routes() {
 	//s.HandleFunc("createUser", s.CreateUser()).Methods("POST") // To create a new user
 	// r.HandleFunc("deleteUser", DeleteUser).Methods("DELETE")      // To delete a user
 	// r.HandleFunc("changePassword", ChangePassword).Methods("PUT") // To change a user's password
-	// s := NewServer()
+	// os := NewServer()
 	// s.HandleFunc("/api/users", s.CreateUser()).Methods(http.MethodPost)
 }
 
@@ -44,7 +44,7 @@ func (s *Server) GetUsers() http.HandlerFunc {
 		if err != nil {
 			panic(err)
 		}
-		db.GetAllUsers(dbConn)
+		s.repo.GetAllUsers(dbConn)
 		fmt.Println("Endpoint hit: returnAllUsers")
 	}
 }

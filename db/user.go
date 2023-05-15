@@ -46,7 +46,7 @@ func (u *UserDB) ToModel() *model.User {
 }
 
 // getAllUsers requests a list of users from the database
-func GetAllUsers(db *gorm.DB) ([]*UserDB, error) {
+func (ur *UserRepo) GetAllUsers(db *gorm.DB) ([]*UserDB, error) {
 	var users []*UserDB
 	result := db.Find(&users)
 	if result.Error != nil {
@@ -55,36 +55,20 @@ func GetAllUsers(db *gorm.DB) ([]*UserDB, error) {
 	return users, nil
 }
 
-func CreateUser(db *gorm.DB) {
-	users := []UserDB{
-		{
-			ID:               "USER_ID.1",
-			Name:             "USER_NAME.1",
-			CreatedAt:        time.Now(),
-			Password:         "USER_PASSWORD.1",
-			SensorPrivateKey: "PRIVATE_KEY.1",
-		},
-		{
-			ID:               "USER_ID.2",
-			Name:             "USER_NAME.2",
-			CreatedAt:        time.Now(),
-			Password:         "USER_PASSWORD.2",
-			SensorPrivateKey: "PRIVATE_KEY.2",
-		},
-		{
-			ID:               "USER_ID.3",
-			Name:             "USER_NAME.3",
-			CreatedAt:        time.Now(),
-			Password:         "USER_PASSWORD.3",
-			SensorPrivateKey: "PRIVATE_KEY.3",
-		},
-	}
-	res := db.Create(&users)
-	if res.Error != nil {
-		panic(res.Error)
-	}
-	for _, user := range users {
-		fmt.Printf("school.ID: %d\n", user.ID)
-	}
+// TODO: handle batching inserts
 
+// Create will add a single user to the database
+func (ur *UserRepo) Create(id string, user *model.User) *gorm.DB {
+	usr := &UserDB{
+		ID:               id,
+		Name:             user.Name,
+		CreatedAt:        time.Now(),
+		Password:         user.Password, //TODO: hash password
+		SensorPrivateKey: "testing",     //TODO : retrieve private key from goliath api
+	}
+	result := ur.db.Create(&usr)
+	if result.Error != nil {
+		panic(result.Error) // TODO: implement error handling
+	}
+	return result
 }
