@@ -2,6 +2,8 @@ package db
 
 import (
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -80,4 +82,48 @@ func (ur *UserRepo) DeleteUserByEmail(email string) *gorm.DB {
 		panic(result.Error) // TODO: implement error handling
 	}
 	return result
+}
+
+// getGoliothPK will retrieve a private key from the Golioth API
+func (ur *UserRepo) getGoliothPK(deviceID string) {
+	// Golioth API endpoint to request a device private key
+	apiURL := "https://api.golioth.io/v1/devices/" + deviceID + "/keys/private"
+
+	// Create a new HTTP client
+	client := http.DefaultClient
+
+	// Create a new HTTP GET request
+	req, err := http.NewRequest(http.MethodGet, apiURL, nil)
+	if err != nil {
+		fmt.Println("Error creating request:", err)
+		return
+	}
+
+	// Set headers for the request (replace {your_token} with your Golioth API token)
+	req.Header.Set("Authorization", "Bearer {your_token}")
+
+	// Send the HTTP request
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error sending request:", err)
+		return
+	}
+
+	// Read the response body
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading response:", err)
+		return
+	}
+
+	// Check the response status code
+	if resp.StatusCode != http.StatusOK {
+		fmt.Println("Request failed with status code:", resp.StatusCode)
+		fmt.Println("Response:", string(body))
+		return
+	}
+
+	// Process the response data
+	fmt.Println("Private Key:", string(body))
 }
