@@ -72,3 +72,12 @@ func (ur *UserRepo) Create(id string, user *model.User) *gorm.DB {
 	}
 	return result
 }
+
+// DeleteUserByEmail will remove a single user from the database
+func (ur *UserRepo) DeleteUserByEmail(email string) *gorm.DB {
+	result := ur.db.Delete(&UserDB{}, "email = ?", email)
+	if result.Error != nil {
+		panic(result.Error) // TODO: implement error handling
+	}
+	return result
+}
