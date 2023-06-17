@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// TODO: move to config file, use env variables and setup remote db
 var dsn = "root:password@tcp(127.0.0.1:3306)/ribbit?charset=utf8mb4&parseTime=True&loc=Local"
 
 func main() {
