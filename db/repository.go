@@ -9,12 +9,12 @@ import (
 
 type Repository struct {
 	users *UserRepo
-	//TODO: add in zap logger
+	// TODO: add in zap logger
 }
 
-// AutoMigrate will automatically migrate the database and correcrt schema errors on startup
+// AutoMigrate will automatically migrate the database and correct schema errors on startup
 func AutoMigrate(db *gorm.DB) {
-	db.AutoMigrate(&UserDB{})
+	db.AutoMigrate(&User{})
 }
 
 func NewRepository(db *gorm.DB) (*Repository, error) {
@@ -25,7 +25,6 @@ func NewRepository(db *gorm.DB) (*Repository, error) {
 	return &Repository{
 		users: NewUserRepo(db),
 	}, nil
-
 }
 
 func (r *Repository) Users() *UserRepo {

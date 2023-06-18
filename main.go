@@ -1,36 +1,19 @@
 package main
 
 import (
+	"log"
 	"net/http"
-	"time"
 
 	"github.com/rosricard/userAccess/api"
-
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
+	"github.com/rosricard/userAccess/db"
 )
 
-// TODO: move to config file, use env variables and setup remote db
-var dsn = "root:password@tcp(127.0.0.1:3306)/ribbit?charset=utf8mb4&parseTime=True&loc=Local"
-
 func main() {
-	// create web server
-	srv := api.NewServer()
-	http.ListenAndServe(":8080", srv)
+	db.ConnectDatabase()
 
-	// gorm for db read / write
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
-	if err != nil {
-		panic(err)
-	}
-	sqldb, err := db.DB()
-	if err != nil {
-		panic(err)
-	}
-	sqldb.SetMaxIdleConns(10)
-	sqldb.SetMaxOpenConns(100)
-	sqldb.SetConnMaxLifetime(time.Second * 30)
-	db.AutoMigrate(db)
-	api.NewServer().GetUsers()
+	r := api.SetupRouter()
 
+	if err := http.ListenAndServe(":8080", r); err != nil {
+		log.Fatal("Failed to start the server:", err)
+	}
 }
