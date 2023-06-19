@@ -15,7 +15,7 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
-	if err := db.CreateUser(user.Name, user.Email); err != nil {
+	if err := db.CreateUser(user.ID, user.Name, user.Email, user.Password, user.PrivateKey); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -51,8 +51,8 @@ func DeleteUser(c *gin.Context) {
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
 
-	r.POST("/users", CreateUser)
-	r.GET("/users", GetAllUsers)
+	r.POST("/createusers", CreateUser)
+	r.GET("/getusers", GetAllUsers)
 	r.DELETE("/users/:id", DeleteUser)
 
 	return r

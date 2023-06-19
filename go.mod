@@ -4,8 +4,6 @@ go 1.19
 
 require gorm.io/driver/mysql v1.4.7
 
-require github.com/gorilla/mux v1.8.0
-
 require (
 	github.com/bytedance/sonic v1.9.1 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
