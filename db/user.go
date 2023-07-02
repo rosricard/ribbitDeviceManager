@@ -4,7 +4,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/gofrs/uuid"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -37,7 +36,7 @@ func NewUserRepo(db *gorm.DB) *UserRepo {
 }
 
 type User struct {
-	ID         uuid.UUID
+	ID         string
 	Name       string
 	Email      string
 	Password   string
@@ -55,14 +54,8 @@ func ConnectDatabase() {
 	db.AutoMigrate(&User{})
 }
 
-func CreateUser(id uuid.UUID, name, email, password, pk string) error {
-	user := User{
-		ID:         id,
-		Name:       name,
-		Email:      email,
-		Password:   password, // TODO: hash password
-		PrivateKey: pk,       // TODO: retrieve private key from golioth api
-	}
+// func CreateUser(id, name, email, password, pk string) error {
+func CreateUser(user User) error {
 	result := db.Create(&user)
 	if result.Error != nil {
 		return result.Error

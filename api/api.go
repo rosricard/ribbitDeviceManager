@@ -5,17 +5,32 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/rosricard/userAccess/db"
 )
 
 func CreateUser(c *gin.Context) {
-	var user db.User
-	if err := c.ShouldBindJSON(&user); err != nil {
+	var userInput struct {
+		Name       string
+		Email      string
+		Password   string
+		PrivateKey string
+	}
+
+	if err := c.ShouldBindJSON(&userInput); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := db.CreateUser(user.ID, user.Name, user.Email, user.Password, user.PrivateKey); err != nil {
+	user := db.User{
+		ID:         uuid.New().String(),
+		Name:       userInput.Name,
+		Email:      userInput.Email,
+		Password:   userInput.Password,   //TODO: hash password
+		PrivateKey: userInput.PrivateKey, //TODO: retrieve private key from golioth api
+	}
+
+	if err := db.CreateUser(user); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
