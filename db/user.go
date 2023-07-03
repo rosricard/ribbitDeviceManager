@@ -13,12 +13,13 @@ var (
 )
 
 type UserDB struct {
-	ID               string `gorm:"column:id;primary_key"`
-	Name             string `gorm:"column:name"`
-	Email            string `gorm:"column:email"`
-	CreatedAt        time.Time
-	Password         string `gorm:"column:password"`
-	SensorPrivateKey string `gorm:"column:private_key"`
+	ID        string `gorm:"column:id;primary_key"`
+	Name      string `gorm:"column:name"`
+	Email     string `gorm:"column:email"`
+	CreatedAt time.Time
+	Password  string `gorm:"column:password"`
+	ProjectID string `gorm:"column:project_id"`
+	DeviceID  string `gorm:"column:device_id"`
 }
 
 type UserRepo struct {
@@ -36,14 +37,16 @@ func NewUserRepo(db *gorm.DB) *UserRepo {
 }
 
 type User struct {
-	ID         string
-	Name       string
-	Email      string
-	Password   string
-	PrivateKey string
+	ID        string
+	Name      string
+	Email     string
+	Password  string
+	ProjectID string
+	DeviceID  string
 }
 
 func ConnectDatabase() {
+	//TODO: move this to a config file
 	dsn := "root:password@tcp(127.0.0.1:3306)/ribbit?charset=utf8mb4&parseTime=True&loc=Local"
 	var err error
 	db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
@@ -54,7 +57,6 @@ func ConnectDatabase() {
 	db.AutoMigrate(&User{})
 }
 
-// func CreateUser(id, name, email, password, pk string) error {
 func CreateUser(user User) error {
 	result := db.Create(&user)
 	if result.Error != nil {
@@ -72,7 +74,8 @@ func GetAllUsers() ([]User, error) {
 	return users, nil
 }
 
-func DeleteUser(id uint) error {
+func DeleteUser(id string) error {
+	//consider adding a type switch to handle uuids
 	result := db.Delete(&User{}, id)
 	if result.Error != nil {
 		return result.Error
