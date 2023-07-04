@@ -13,13 +13,15 @@ var (
 )
 
 type UserDB struct {
-	ID        string `gorm:"column:id;primary_key"`
-	Name      string `gorm:"column:name"`
-	Email     string `gorm:"column:email"`
-	CreatedAt time.Time
-	Password  string `gorm:"column:password"`
-	ProjectID string `gorm:"column:project_id"`
-	DeviceID  string `gorm:"column:device_id"`
+	ID            string `gorm:"column:id;primary_key"`
+	Name          string `gorm:"column:name"`
+	Email         string `gorm:"column:email"`
+	CreatedAt     time.Time
+	Password      string `gorm:"column:password"`
+	ProjectID     string `gorm:"column:project_id"`
+	DeviceID      string `gorm:"column:device_id"`
+	GoliothAPIKey string `gorm:"column:golioth_api_key"`
+	PSK           string `gorm:"column:psk"`
 }
 
 type UserRepo struct {

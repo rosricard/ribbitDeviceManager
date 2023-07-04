@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -60,7 +61,40 @@ func DeleteUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
 }
 
-// getGoliothPrivateKey retrieves the private key from the golioth api
+const (
+	baseURL = "https://api.golioth.io"
+	apiKey  = "some-api-key"
+)
+
+// HandleGetRequest handles GET requests to external APIs
+func handleGetRequest(c *gin.Context) {
+	url := fmt.Sprintf("%s%s", baseURL, c.Request.RequestURI)
+
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failed to create request")
+		return
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", apiKey))
+
+	resp, err := client.Do(req)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failed to execute request")
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		c.String(resp.StatusCode, "Failed to fetch data")
+		return
+	}
+
+	// Handle the response body here
+
+	c.String(http.StatusOK, "GET request successful")
+}
 
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
@@ -68,6 +102,14 @@ func SetupRouter() *gin.Engine {
 	r.POST("/createusers", CreateUser)
 	r.GET("/getusers", GetAllUsers)
 	r.DELETE("/users/:id", DeleteUser)
+	//can create a new "blank" device
+	r.GET("/v1/projects/ribbit-test-569244/devices", handleGetRequest)
+	//upload device credentials to golioth
+	r.GET("/v1/projects/ribbit-test-569244/devices/64194746a946a2ad67aba7ad", handleGetRequest)
+	//get the user device identity and PSK
+	r.GET("/v1/projects/ribbit-test-569244/credentials", handleGetRequest)
+
+	//TODO: generate credentials for the user
 
 	return r
 }
