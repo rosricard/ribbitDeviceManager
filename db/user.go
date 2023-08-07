@@ -4,6 +4,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/google/uuid"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -27,6 +28,14 @@ type UserDB struct {
 type UserRepo struct {
 	db *gorm.DB
 }
+type User struct {
+	ID        string
+	Name      string
+	Email     string
+	Password  string
+	ProjectID string
+	DeviceID  string
+}
 
 // TableName sets the table name for the UserDB model
 func (UserDB) TableName() string {
@@ -38,18 +47,10 @@ func NewUserRepo(db *gorm.DB) *UserRepo {
 	return &UserRepo{db}
 }
 
-type User struct {
-	ID        string
-	Name      string
-	Email     string
-	Password  string
-	ProjectID string
-	DeviceID  string
-}
-
+// ConnectDatabase initalizes the sql database connection and gorm
 func ConnectDatabase() {
-	//TODO: move this to a config file
-	dsn := "root:password@tcp(127.0.0.1:3306)/ribbit?charset=utf8mb4&parseTime=True&loc=Local"
+	//TODO: setup db connection as an env variable
+	dsn := "root:billybob123@tcp(127.0.0.1:3306)/ribbit?charset=utf8mb4&parseTime=True&loc=Local"
 	var err error
 	db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
@@ -59,7 +60,9 @@ func ConnectDatabase() {
 	db.AutoMigrate(&User{})
 }
 
+// CreateUser will add a single new user to database
 func CreateUser(user User) error {
+	user.ID = uuid.New().String()
 	result := db.Create(&user)
 	if result.Error != nil {
 		return result.Error
@@ -67,6 +70,7 @@ func CreateUser(user User) error {
 	return nil
 }
 
+// GetAllUsers retrieves a list of all users and their info from the database
 func GetAllUsers() ([]User, error) {
 	var users []User
 	result := db.Find(&users)
@@ -76,11 +80,7 @@ func GetAllUsers() ([]User, error) {
 	return users, nil
 }
 
-func DeleteUser(id string) error {
-	//consider adding a type switch to handle uuids
-	result := db.Delete(&User{}, id)
-	if result.Error != nil {
-		return result.Error
-	}
-	return nil
+// DeleteUserByEmail deletes a user from the database identified by email
+func DeleteUserByEmail(email string) error {
+	return db.Delete(&User{}, "email = ?", email).Error
 }

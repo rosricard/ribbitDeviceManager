@@ -51,9 +51,9 @@ func GetAllUsers(c *gin.Context) {
 }
 
 func DeleteUser(c *gin.Context) {
-	userID := c.Param("id")
+	email := c.Param("email")
 
-	if err := db.DeleteUser(userID); err != nil {
+	if err := db.DeleteUserByEmail(email); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
