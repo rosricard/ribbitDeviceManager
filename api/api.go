@@ -24,12 +24,10 @@ func CreateUser(c *gin.Context) {
 	}
 
 	user := db.User{
-		ID:        userInput.ID,
-		Name:      userInput.Name,
-		Email:     userInput.Email,
-		Password:  userInput.Password, //TODO: hash password
-		ProjectID: userInput.ProjectID,
-		DeviceID:  userInput.DeviceID, //TODO: retrieve private key from golioth api instead of user input
+		ID:       userInput.ID,
+		Name:     userInput.Name,
+		Email:    userInput.Email,
+		Password: userInput.Password, //TODO: hash password
 	}
 
 	if err := db.CreateUser(user); err != nil {
@@ -100,8 +98,10 @@ func SetupRouter() *gin.Engine {
 	r := gin.Default()
 
 	r.POST("/createusers", CreateUser)
+	//TODO: change this to GetUser
 	r.GET("/getusers", GetAllUsers)
-	r.DELETE("/users/:id", DeleteUser)
+	r.DELETE("/users/:email", DeleteUser)
+	//TODO: Add single device API
 	//can create a new "blank" device
 	r.GET("/v1/projects/ribbit-test-569244/devices", handleGetRequest)
 	//upload device credentials to golioth
