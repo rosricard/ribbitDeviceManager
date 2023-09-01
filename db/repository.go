@@ -38,7 +38,7 @@ func NewRepository(db *gorm.DB) (*Repository, error) {
 // ConnectDatabase initalizes the sql database connection and gorm
 func ConnectDatabase() {
 	//TODO: setup db connection as an env variable
-	dsn := "root:billybob123@tcp(127.0.0.1:3306)/ribbit?charset=utf8mb4&parseTime=True&loc=Local"
+	dsn := "root:password@tcp(127.0.0.1:3306)/ribbit?charset=utf8mb4&parseTime=True&loc=Local"
 	var err error
 	db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {

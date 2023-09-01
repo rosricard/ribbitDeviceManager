@@ -2,10 +2,17 @@ package api
 
 import (
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rosricard/userAccess/db"
+)
+
+const (
+	projectID = "ribbit-test-569244"
 )
 
 func CreateUser(c *gin.Context) {
@@ -61,8 +68,25 @@ func DeleteUser(c *gin.Context) {
 
 const (
 	baseURL = "https://api.golioth.io"
-	apiKey  = "some-api-key"
+	apiKey  = "R7aJE5qW4DNHJTgy9JpbmZYrFXnRTY8S"
 )
+
+// query existing devices from the golioth API
+func getAllDevices(c *gin.Context) {
+	response, err := http.Get("https://api.golioth.io/v1/projects/ribbit-test-569244/devices/64194746a946a2ad67aba7ad")
+
+	if err != nil {
+		fmt.Print(err.Error())
+		os.Exit(1)
+	}
+
+	responseData, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(string(responseData))
+
+}
 
 // HandleGetRequest handles GET requests to external APIs
 func handleGetRequest(c *gin.Context) {
@@ -94,6 +118,20 @@ func handleGetRequest(c *gin.Context) {
 	c.String(http.StatusOK, "GET request successful")
 }
 
+// func goliothAuth {
+
+// }
+
+// func createDevice {
+
+// }
+
+//TODO: setup config files with projectID
+
+// user logs in
+// create a new device
+// add device to table
+
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
 
@@ -104,10 +142,12 @@ func SetupRouter() *gin.Engine {
 	//TODO: Add single device API
 	//can create a new "blank" device
 	r.GET("/v1/projects/ribbit-test-569244/devices", handleGetRequest)
-	//upload device credentials to golioth
-	r.GET("/v1/projects/ribbit-test-569244/devices/64194746a946a2ad67aba7ad", handleGetRequest)
+	//get devices from golioth
+	r.GET("/devices", getAllDevices)
 	//get the user device identity and PSK
 	r.GET("/v1/projects/ribbit-test-569244/credentials", handleGetRequest)
+	// get api keys
+	//https://api.golioth.io/v1/projects/ribbit-test-569244/apikeys
 
 	//TODO: generate credentials for the user
 
