@@ -69,11 +69,12 @@ func DeleteUser(c *gin.Context) {
 const (
 	baseURL = "https://api.golioth.io"
 	apiKey  = "R7aJE5qW4DNHJTgy9JpbmZYrFXnRTY8S"
+	apiURL  = "https://api.golioth.io/v1/projects/ribbit-test-569244/devices/64194746a946a2ad67aba7ad/credentials"
 )
 
 // query existing devices from the golioth API
 func getAllDevices(c *gin.Context) {
-	response, err := http.Get("https://api.golioth.io/v1/projects/ribbit-test-569244/devices/64194746a946a2ad67aba7ad")
+	response, err := http.Get("https://api.golioth.io/v1/projects/ribbit-test-569244/devices/64194746a946a2ad67aba7ad/credentials")
 
 	if err != nil {
 		fmt.Print(err.Error())
@@ -88,39 +89,35 @@ func getAllDevices(c *gin.Context) {
 
 }
 
-// HandleGetRequest handles GET requests to external APIs
-func handleGetRequest(c *gin.Context) {
-	url := fmt.Sprintf("%s%s", baseURL, c.Request.RequestURI)
+// goliothGetRequest handles GET requests to external APIs
+func goliothGetRequest(c *gin.Context) {
 
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", url, nil)
+	// Create a new HTTP request
+	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Failed to create request")
-		return
+		log.Fatalf("Error creating request: %v", err)
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", apiKey))
+	// Add headers to the HTTP request
+	req.Header.Set("X-API-Key", apiKey)
 
+	// Make the API call
+	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Failed to execute request")
-		return
+		log.Fatalf("Error making request: %v", err)
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		c.String(resp.StatusCode, "Failed to fetch data")
-		return
+	// Read the response
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalf("Error reading response body: %v", err)
 	}
 
-	// Handle the response body here
-
-	c.String(http.StatusOK, "GET request successful")
+	// Print the response body
+	fmt.Println(string(body))
 }
-
-// func goliothAuth {
-
-// }
 
 // func createDevice {
 
@@ -139,13 +136,14 @@ func SetupRouter() *gin.Engine {
 	//TODO: change this to GetUser
 	r.GET("/getusers", GetAllUsers)
 	r.DELETE("/users/:email", DeleteUser)
+	r.GET("goliothGetRequest", goliothGetRequest)
 	//TODO: Add single device API
 	//can create a new "blank" device
-	r.GET("/v1/projects/ribbit-test-569244/devices", handleGetRequest)
+	r.GET("/v1/projects/ribbit-test-569244/devices", goliothGetRequest)
 	//get devices from golioth
 	r.GET("/devices", getAllDevices)
 	//get the user device identity and PSK
-	r.GET("/v1/projects/ribbit-test-569244/credentials", handleGetRequest)
+	r.GET("/v1/projects/ribbit-test-569244/credentials", goliothGetRequest)
 	// get api keys
 	//https://api.golioth.io/v1/projects/ribbit-test-569244/apikeys
 
