@@ -1,11 +1,9 @@
 package api
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rosricard/userAccess/db"
@@ -72,23 +70,6 @@ const (
 	apiURL  = "https://api.golioth.io/v1/projects/ribbit-test-569244/devices/64194746a946a2ad67aba7ad/credentials"
 )
 
-// query existing devices from the golioth API
-func getAllDevices(c *gin.Context) {
-	response, err := http.Get("https://api.golioth.io/v1/projects/ribbit-test-569244/devices/64194746a946a2ad67aba7ad/credentials")
-
-	if err != nil {
-		fmt.Print(err.Error())
-		os.Exit(1)
-	}
-
-	responseData, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println(string(responseData))
-
-}
-
 // goliothGetRequest handles GET requests to external APIs
 func goliothGetRequest(c *gin.Context) {
 
@@ -115,16 +96,11 @@ func goliothGetRequest(c *gin.Context) {
 		log.Fatalf("Error reading response body: %v", err)
 	}
 
-	// Print the response body
-	fmt.Println(string(body))
+	// fmt.Println(resp.Body)
+	c.JSON(http.StatusOK, gin.H{"message": string(body)})
 }
 
-// func createDevice {
-
-// }
-
 //TODO: setup config files with projectID
-
 // user logs in
 // create a new device
 // add device to table
@@ -136,14 +112,14 @@ func SetupRouter() *gin.Engine {
 	//TODO: change this to GetUser
 	r.GET("/getusers", GetAllUsers)
 	r.DELETE("/users/:email", DeleteUser)
-	r.GET("goliothGetRequest", goliothGetRequest)
+	r.GET("/goliothGetRequest", goliothGetRequest)
 	//TODO: Add single device API
 	//can create a new "blank" device
-	r.GET("/v1/projects/ribbit-test-569244/devices", goliothGetRequest)
+	//r.GET("/v1/projects/ribbit-test-569244/devices", getAllDevices)
 	//get devices from golioth
-	r.GET("/devices", getAllDevices)
+	//r.GET("/devices", getAllDevices)
 	//get the user device identity and PSK
-	r.GET("/v1/projects/ribbit-test-569244/credentials", goliothGetRequest)
+	//r.GET("/v1/projects/ribbit-test-569244/credentials", getAllDevices)
 	// get api keys
 	//https://api.golioth.io/v1/projects/ribbit-test-569244/apikeys
 
