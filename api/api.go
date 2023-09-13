@@ -1,6 +1,8 @@
 package api
 
 import (
+	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -12,6 +14,18 @@ import (
 const (
 	projectID = "ribbit-test-569244"
 )
+
+type Device struct {
+	ID           string `json:"id"`
+	Type         string `json:"type"`
+	Identity     string `json:"identity"`
+	CreatedAt    string `json:"createdAt"`
+	PreSharedKey string `json:"preSharedKey"`
+}
+
+type DeviceList struct {
+	List []Device `json:"list"`
+}
 
 func CreateUser(c *gin.Context) {
 	var userInput struct {
@@ -96,8 +110,16 @@ func goliothGetRequest(c *gin.Context) {
 		log.Fatalf("Error reading response body: %v", err)
 	}
 
-	// fmt.Println(resp.Body)
-	c.JSON(http.StatusOK, gin.H{"message": string(body)})
+	var devices DeviceList
+
+	err1 := json.Unmarshal(body, &devices)
+	if err1 != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	// return the response to the client
+	c.JSON(http.StatusOK, gin.H{"message": resp.Status, "data": devices})
 }
 
 //TODO: setup config files with projectID
