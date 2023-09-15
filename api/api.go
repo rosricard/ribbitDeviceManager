@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -12,7 +13,11 @@ import (
 )
 
 const (
-	projectID = "ribbit-test-569244"
+	projectID     = "ribbit-test-569244"
+	baseURL       = "https://api.golioth.io"
+	apiKey        = "R7aJE5qW4DNHJTgy9JpbmZYrFXnRTY8S"
+	getAllDevices = "https://api.golioth.io/v1/projects/ribbit-test-569244/devices/64194746a946a2ad67aba7ad/credentials"
+	postDevice    = "https://api.golioth.io/v1/projects/ribbit-test-569244/devices"
 )
 
 type Device struct {
@@ -78,19 +83,14 @@ func DeleteUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
 }
 
-const (
-	baseURL = "https://api.golioth.io"
-	apiKey  = "R7aJE5qW4DNHJTgy9JpbmZYrFXnRTY8S"
-	apiURL  = "https://api.golioth.io/v1/projects/ribbit-test-569244/devices/64194746a946a2ad67aba7ad/credentials"
-)
-
-// goliothGetRequest handles GET requests to external APIs
-func goliothGetRequest(c *gin.Context) {
+// goliothGetRequest handles GET requests to the golioth external APIs
+func goliothGetRequest(c *gin.Context) (error, *DeviceList) {
 
 	// Create a new HTTP request
-	req, err := http.NewRequest("GET", apiURL, nil)
+	req, err := http.NewRequest("GET", getAllDevices, nil)
 	if err != nil {
 		log.Fatalf("Error creating request: %v", err)
+		return err, nil
 	}
 
 	// Add headers to the HTTP request
@@ -101,6 +101,7 @@ func goliothGetRequest(c *gin.Context) {
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Fatalf("Error making request: %v", err)
+		return err, nil
 	}
 	defer resp.Body.Close()
 
@@ -108,23 +109,82 @@ func goliothGetRequest(c *gin.Context) {
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatalf("Error reading response body: %v", err)
+		return err, nil
 	}
 
 	var devices DeviceList
 
 	err1 := json.Unmarshal(body, &devices)
 	if err1 != nil {
-		fmt.Println("Error:", err)
-		return
+		return err1, nil
 	}
 
 	// return the response to the client
 	c.JSON(http.StatusOK, gin.H{"message": resp.Status, "data": devices})
+	return nil, &devices
+}
+
+func createDevice(c *gin.Context) {
+
+	type goliothDevice struct {
+		ProjectID   string   `json:"projectId"`
+		Name        string   `json:"name"`
+		HardwareIds []string `json:"hardwareIds"`
+		TagIds      []string `json:"tagIds"`
+		BlueprintId string   `json:"blueprintId"`
+	}
+
+	device := goliothDevice{
+		ProjectID:   projectID,
+		Name:        "Test",
+		HardwareIds: []string{"123456789"},
+		TagIds:      []string{"string"},
+		BlueprintId: "string",
+	}
+
+	body, err := json.Marshal(device)
+	if err != nil {
+		log.Fatalf("Error marshaling JSON: %s", err)
+	}
+
+	// Create the API endpoint URL
+	url := fmt.Sprintf("%s/v1/projects/%s/devices", baseURL, device.ProjectID)
+
+	// Create the HTTP request
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(body))
+	if err != nil {
+		log.Fatalf("Error making request: %v", err)
+	}
+	// Add headers to the HTTP request
+	req.Header.Set("X-API-Key", apiKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	// Send the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatalf("Error making request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	// Read the response
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalf("Error making request: %v", err)
+	}
+
+	if resp.StatusCode != http.StatusCreated {
+		log.Fatalf("Failed to create device, status code: %d, response: %s", resp.StatusCode, respBody)
+	}
+
+	fmt.Println("Successfully created device")
+
+	// return the response to the client
+	c.JSON(http.StatusOK, gin.H{"message": resp.Status})
 }
 
 //TODO: setup config files with projectID
 // user logs in
-// create a new device
 // add device to table
 
 func SetupRouter() *gin.Engine {
@@ -134,10 +194,7 @@ func SetupRouter() *gin.Engine {
 	//TODO: change this to GetUser
 	r.GET("/getusers", GetAllUsers)
 	r.DELETE("/users/:email", DeleteUser)
-	r.GET("/goliothGetRequest", goliothGetRequest)
-	//TODO: Add single device API
-	//can create a new "blank" device
-	//r.GET("/v1/projects/ribbit-test-569244/devices", getAllDevices)
+	r.POST("/createDevice", createDevice)
 	//get devices from golioth
 	//r.GET("/devices", getAllDevices)
 	//get the user device identity and PSK
