@@ -157,7 +157,7 @@ func createDevice(c *gin.Context) {
 	}
 	// Add headers to the HTTP request
 	req.Header.Set("X-API-Key", apiKey)
-	req.Header.Set("Content-Type", "application/json")
+	// req.Header.Set("Content-Type", "application/json")
 
 	// Send the request
 	client := &http.Client{}
@@ -195,14 +195,10 @@ func SetupRouter() *gin.Engine {
 	r.GET("/getusers", GetAllUsers)
 	r.DELETE("/users/:email", DeleteUser)
 	r.POST("/createDevice", createDevice)
-	//get devices from golioth
 	//r.GET("/devices", getAllDevices)
 	//get the user device identity and PSK
 	//r.GET("/v1/projects/ribbit-test-569244/credentials", getAllDevices)
 	// get api keys
 	//https://api.golioth.io/v1/projects/ribbit-test-569244/apikeys
-
-	//TODO: generate credentials for the user
-
 	return r
 }
