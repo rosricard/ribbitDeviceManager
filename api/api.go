@@ -7,8 +7,11 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/goombaio/namegenerator"
 	"github.com/rosricard/userAccess/db"
 )
 
@@ -18,6 +21,7 @@ const (
 	apiKey        = "R7aJE5qW4DNHJTgy9JpbmZYrFXnRTY8S"
 	getAllDevices = "https://api.golioth.io/v1/projects/ribbit-test-569244/devices/64194746a946a2ad67aba7ad/credentials"
 	postDevice    = "https://api.golioth.io/v1/projects/ribbit-test-569244/devices"
+	tagIds        = "647d5ce530e7d8943a41f874"
 )
 
 type Device struct {
@@ -127,19 +131,25 @@ func goliothGetRequest(c *gin.Context) (error, *DeviceList) {
 func createDevice(c *gin.Context) {
 
 	type goliothDevice struct {
-		ProjectID   string   `json:"projectId"`
-		Name        string   `json:"name"`
-		HardwareIds []string `json:"hardwareIds"`
-		TagIds      []string `json:"tagIds"`
-		BlueprintId string   `json:"blueprintId"`
+		ProjectID string   `json:"projectId"` // TODO: query the project id from the golioth API
+		Name      string   `json:"name"`
+		DeviceIds []string `json:"deviceIds"` // uuid
+		TagIds    []string `json:"tagIds"`    // TODO: query the tag id from the golioth API
 	}
 
+	// generate device name
+	seed := time.Now().UTC().UnixNano()
+	nameGenerator := namegenerator.NewNameGenerator(seed)
+	name := nameGenerator.Generate()
+
+	// generate device id
+	did := uuid.New().String()
+
 	device := goliothDevice{
-		ProjectID:   projectID,
-		Name:        "Test",
-		HardwareIds: []string{"123456789"},
-		TagIds:      []string{"string"},
-		BlueprintId: "string",
+		ProjectID: projectID,
+		Name:      name,
+		DeviceIds: []string{did},
+		TagIds:    []string{tagIds},
 	}
 
 	body, err := json.Marshal(device)
@@ -179,13 +189,18 @@ func createDevice(c *gin.Context) {
 
 	fmt.Println("Successfully created device")
 
+	// add device to db
+
 	// return the response to the client
 	c.JSON(http.StatusOK, gin.H{"message": resp.Status})
 }
 
-//TODO: setup config files with projectID
+//TODO: setup config files with projectID, tagIds, APIkey, etc
 // user logs in
 // add device to table
+
+//TODO: on app startup, run a check against the golioth API to get all devices and compare against the database
+//TODO: write an api to get TagIds
 
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
