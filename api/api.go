@@ -195,12 +195,40 @@ func createDevice(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": resp.Status})
 }
 
+func getTags(c *gin.Context) {
+	getTagsAPI := "https://api.golioth.io/v1/projects/" + projectID + "/tags"
+
+	// Create a new HTTP request
+	req, err := http.NewRequest("GET", getTagsAPI, nil)
+	if err != nil {
+		log.Fatalf("Error creating request: %v", err)
+	}
+	// Add headers to the HTTP request
+	req.Header.Set("X-API-Key", apiKey)
+
+	// Make the API call
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatalf("Error making request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	// Read the response
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalf("Error reading response body: %v", err)
+	}
+
+	// return the response to the client
+	c.JSON(http.StatusOK, gin.H{"message": resp.Status, "data": string(body)})
+}
+
 //TODO: setup config files with projectID, tagIds, APIkey, etc
 // user logs in
 // add device to table
 
 //TODO: on app startup, run a check against the golioth API to get all devices and compare against the database
-//TODO: write an api to get TagIds
 
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
@@ -208,11 +236,12 @@ func SetupRouter() *gin.Engine {
 	r.POST("/createusers", CreateUser)
 	//TODO: change this to GetUser
 	r.GET("/getusers", GetAllUsers)
+	r.GET("/getTags", getTags)
 	r.DELETE("/users/:email", DeleteUser)
 	r.POST("/createDevice", createDevice)
 	//r.GET("/devices", getAllDevices)
-	//get the user device identity and PSK
-	//r.GET("/v1/projects/ribbit-test-569244/credentials", getAllDevices)
+	// get the user device identity and PSK
+	// r.GET("/v1/projects/ribbit-test-569244/credentials", getAllDevices)
 	// get api keys
 	//https://api.golioth.io/v1/projects/ribbit-test-569244/apikeys
 	return r
