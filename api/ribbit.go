@@ -13,7 +13,6 @@ const (
 	projectID = "ribbit-test-569244"
 	baseURL   = "https://api.golioth.io"
 	apiKey    = "R7aJE5qW4DNHJTgy9JpbmZYrFXnRTY8S"
-	tagIds    = "647d5ce530e7d8943a41f874"
 )
 
 type Device struct {
@@ -90,9 +89,9 @@ func SetupRouter() *gin.Engine {
 	r.POST("/createusers", CreateUser)
 	//TODO: change this to GetUser
 	r.GET("/getusers", GetAllUsers)
-	r.GET("/getTags", getTags)
 	r.DELETE("/users/:email", DeleteUser)
 	r.POST("/createDevice", createDevice)
+	r.POST("/createPSK", createDevicePrivateKey)
 	//r.GET("/devices", getAllDevices)
 	// get the user device identity and PSK
 	// r.GET("/v1/projects/ribbit-test-569244/credentials", getAllDevices)

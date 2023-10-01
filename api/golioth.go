@@ -35,7 +35,6 @@ func createDevice(c *gin.Context) {
 		ProjectID: projectID,
 		Name:      name,
 		DeviceIds: []string{did},
-		TagIds:    []string{tagIds},
 	}
 
 	body, err := json.Marshal(device)
@@ -73,26 +72,46 @@ func createDevice(c *gin.Context) {
 	}
 
 	fmt.Println("Successfully created device")
+	//create private key
 
-	// add device to db
+	//getUser info
+	//combine user info and device info
+
+	// add device to db if success was confirmed
 
 	// return the response to the client
 	c.JSON(http.StatusOK, gin.H{"message": resp.Status})
 }
 
-func getTags(c *gin.Context) {
-	// Create the API endpoint URL
-	url := fmt.Sprintf("%s/v1/projects/%s/tags", baseURL, projectID)
+// createPrivateKey creates a private key for the device after the device itself has been created
+func createPSK(projectID, deviceID string) (string, error) {
+	type goliothPSKreq struct {
+		ProjectID    string `json:"projectId"`
+		preSharedKey string `json:"preSharedKey"`
+	}
 
-	// Create a new HTTP request
-	req, err := http.NewRequest("GET", url, nil)
+	psk := goliothPSKreq{
+		ProjectID:    projectID,
+		preSharedKey: "string",
+	}
+
+	body, err := json.Marshal(psk)
 	if err != nil {
-		log.Fatalf("Error creating request: %v", err)
+		log.Fatalf("Error marshaling JSON: %s", err)
+	}
+
+	// Create the API endpoint URL
+	url := fmt.Sprintf("%s/v1/projects/%s/devices/%s/credentials", baseURL, projectID, deviceID)
+
+	// Create the HTTP request
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(body))
+	if err != nil {
+		log.Fatalf("Error making request: %v", err)
 	}
 	// Add headers to the HTTP request
 	req.Header.Set("X-API-Key", apiKey)
 
-	// Make the API call
+	// Send the request
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -101,11 +120,37 @@ func getTags(c *gin.Context) {
 	defer resp.Body.Close()
 
 	// Read the response
-	body, err := ioutil.ReadAll(resp.Body)
+	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatalf("Error reading response body: %v", err)
+		log.Fatalf("Error making request: %v", err)
 	}
 
-	// return the response to the client
-	c.JSON(http.StatusOK, gin.H{"message": resp.Status, "data": string(body)})
+	if resp.StatusCode != http.StatusCreated {
+		log.Fatalf("Failed to create device, status code: %d, response: %s", resp.StatusCode, respBody)
+	}
+
+	fmt.Println("Successfully created device")
+
+	//unmarshal response
+	type pskRespData struct {
+		ID           string    `json:"id"`
+		Type         string    `json:"type"`
+		Identity     string    `json:"identity"`
+		CreatedAt    time.Time `json:"createdAt"`
+		PreSharedKey string    `json:"preSharedKey"`
+	}
+
+	var pskData pskRespData
+	if err := json.Unmarshal([]byte(respBody), &pskData); err != nil {
+		fmt.Println("Error:", err)
+		return "", err
+	}
+
+	return pskData.PreSharedKey, nil
+
+}
+
+// test createPSK func
+func createDevicePrivateKey(c *gin.Context) {
+	createPSK(projectID, "6518abaaebe0f4c62ee15eb6")
 }

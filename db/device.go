@@ -7,12 +7,13 @@ import (
 )
 
 type DeviceDB struct {
-	GoliothPSKID  string `gorm:"column:golioth_psk_id;primary_key"`
-	GoliothPSK    string `gorm:"column:golioth_psk"`
-	UserID        string `gorm:"column:user_id"`
-	UserGivenName string `gorm:"column:user_given_name"`
-	ProjectID     string `gorm:"column:project_id"`
-	CreatedAt     time.Time
+	deviceID   string `gorm:"column:device_id;primary_key"`
+	deviceName string `gorm:"column:device_name"`
+	devicePSK  string `gorm:"column:device_psk"`
+	UserID     string `gorm:"column:user_id"`
+	UserName   string `gorm:"column:user_given_name"`
+	ProjectID  string `gorm:"column:project_id"`
+	CreatedAt  time.Time
 }
 
 type DeviceRepo struct {
@@ -39,6 +40,9 @@ func NewDeviceRepo(db *gorm.DB) *DeviceRepo {
 }
 
 // CreateDevice will add a single new device to database
+func (repo *DeviceRepo) CreateDevice(device DeviceDB) error {
+	return repo.db.Create(&device).Error
+}
 
 // GetAllDevices retrieves a list of all devices and their info from the database
 
