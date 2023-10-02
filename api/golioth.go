@@ -14,7 +14,26 @@ import (
 	"github.com/goombaio/namegenerator"
 )
 
+type pskRespData struct {
+	ID           string    `json:"id"`
+	Type         string    `json:"type"`
+	Identity     string    `json:"identity"`
+	CreatedAt    time.Time `json:"createdAt"`
+	PreSharedKey string    `json:"preSharedKey"`
+}
+
+type newDevice struct {
+	ID          string   `json:"id"`
+	hardwareIDs []string `json:"hardwareIds"`
+}
+
+// createDevice creates a new device and returns the device id and psk
 func createDevice(c *gin.Context) {
+	createNewDevice()
+}
+
+// createDevice calls the golioth API to create a new device
+func createNewDevice() (newDevice, error) {
 
 	type goliothDevice struct {
 		ProjectID string   `json:"projectId"` // TODO: query the project id from the golioth API
@@ -67,32 +86,28 @@ func createDevice(c *gin.Context) {
 		log.Fatalf("Error making request: %v", err)
 	}
 
-	if resp.StatusCode != http.StatusCreated {
+	if resp.StatusCode != http.StatusOK {
 		log.Fatalf("Failed to create device, status code: %d, response: %s", resp.StatusCode, respBody)
 	}
 
-	fmt.Println("Successfully created device")
-	//create private key
+	//unmarshal response into newDevice struct
+	var newDevice newDevice
+	if err := json.Unmarshal([]byte(respBody), &newDevice); err != nil {
+		fmt.Println("Error:", err)
+		return newDevice, err
+	}
 
-	//getUser info
-	//combine user info and device info
-
-	// add device to db if success was confirmed
-
-	// return the response to the client
-	c.JSON(http.StatusOK, gin.H{"message": resp.Status})
+	return newDevice, nil
 }
 
 // createPrivateKey creates a private key for the device after the device itself has been created
-func createPSK(projectID, deviceID string) (string, error) {
+func createPSK(deviceID string) (pskRespData, error) {
 	type goliothPSKreq struct {
-		ProjectID    string `json:"projectId"`
-		preSharedKey string `json:"preSharedKey"`
+		PreSharedKey string `json:"preSharedKey"`
 	}
 
 	psk := goliothPSKreq{
-		ProjectID:    projectID,
-		preSharedKey: "string",
+		PreSharedKey: "string",
 	}
 
 	body, err := json.Marshal(psk)
@@ -125,32 +140,17 @@ func createPSK(projectID, deviceID string) (string, error) {
 		log.Fatalf("Error making request: %v", err)
 	}
 
-	if resp.StatusCode != http.StatusCreated {
-		log.Fatalf("Failed to create device, status code: %d, response: %s", resp.StatusCode, respBody)
+	if resp.StatusCode != http.StatusOK {
+		log.Fatalf("Failed to create device psk, status code: %d, response: %s", resp.StatusCode, respBody)
 	}
-
-	fmt.Println("Successfully created device")
 
 	//unmarshal response
-	type pskRespData struct {
-		ID           string    `json:"id"`
-		Type         string    `json:"type"`
-		Identity     string    `json:"identity"`
-		CreatedAt    time.Time `json:"createdAt"`
-		PreSharedKey string    `json:"preSharedKey"`
-	}
-
 	var pskData pskRespData
 	if err := json.Unmarshal([]byte(respBody), &pskData); err != nil {
 		fmt.Println("Error:", err)
-		return "", err
+		return pskData, err
 	}
 
-	return pskData.PreSharedKey, nil
+	return pskData, nil
 
-}
-
-// test createPSK func
-func createDevicePrivateKey(c *gin.Context) {
-	createPSK(projectID, "6518abaaebe0f4c62ee15eb6")
 }

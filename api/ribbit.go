@@ -78,6 +78,20 @@ func DeleteUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
 }
 
+// TODO: track user login
+
+// joinUserDevice adds a device to a user
+func joinUserDevice(user db.User, device db.Device) error {
+	//create private key
+	//psk, err := createPSK(did)
+
+	//getUser info
+	//combine user info and device info
+
+	// add device to db if success was confirmed
+	return nil
+}
+
 // TODO: setup config files with projectID, tagIds, APIkey, etc
 // user logs in
 // add device to table
@@ -91,10 +105,6 @@ func SetupRouter() *gin.Engine {
 	r.GET("/getusers", GetAllUsers)
 	r.DELETE("/users/:email", DeleteUser)
 	r.POST("/createDevice", createDevice)
-	r.POST("/createPSK", createDevicePrivateKey)
-	//r.GET("/devices", getAllDevices)
-	// get the user device identity and PSK
-	// r.GET("/v1/projects/ribbit-test-569244/credentials", getAllDevices)
 	// get api keys
 	//https://api.golioth.io/v1/projects/ribbit-test-569244/apikeys
 	return r
