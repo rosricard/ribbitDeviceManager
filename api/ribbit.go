@@ -130,7 +130,7 @@ func createDevice(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
-	c.JSON(http.StatusOK, gin.H{"device": device.DeviceId, "psk": pskData.PreSharedKey})
+	c.JSON(http.StatusOK, gin.H{"deviceID": device.DeviceId, "psk": pskData.Identity})
 
 }
 
