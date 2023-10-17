@@ -101,7 +101,7 @@ func createNewDevice() (goliothDevice, error) {
 	var response Response
 	err1 := json.Unmarshal([]byte(respBody), &response)
 	if err1 != nil {
-		log.Fatalf("Error parsing JSON: %v", err)
+		log.Fatalf("Error parsing JSON: %v", err1)
 		return device, err
 	}
 
@@ -155,12 +155,37 @@ func createPSK(deviceID string) (pskRespData, error) {
 		log.Fatalf("Failed to create device psk, status code: %d, response: %s", resp.StatusCode, respBody)
 	}
 
+	type deviceData struct {
+		ID           string `json:"id"`
+		Type         string `json:"type"`
+		Identity     string `json:"identity"`
+		CreatedAt    string `json:"createdAt"`
+		PreSharedKey string `json:"preSharedKey"`
+	}
+
+	type Response struct {
+		Data deviceData `json:"data"`
+	}
+
+	// Parse the JSON string into a Response struct
+	var response Response
+	err1 := json.Unmarshal([]byte(respBody), &response)
+	if err1 != nil {
+		log.Fatalf("Error parsing JSON: %v", err1)
+		return pskRespData{}, err
+	}
+
 	//unmarshal response
 	var pskData pskRespData
-	if err := json.Unmarshal([]byte(respBody), &pskData); err != nil {
-		fmt.Println("Error:", err)
-		return pskData, err
+	pskData.ID = response.Data.ID
+	pskData.Type = response.Data.Type
+	pskData.Identity = response.Data.Identity
+	pskData.CreatedAt, err = time.Parse(time.RFC3339, response.Data.CreatedAt)
+	if err != nil {
+		log.Fatalf("Error parsing JSON: %v", err)
+		return pskRespData{}, err
 	}
+	pskData.PreSharedKey = response.Data.PreSharedKey
 
 	return pskData, nil
 
