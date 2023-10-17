@@ -16,7 +16,6 @@ var (
 type Repository struct {
 	users   *UserRepo
 	devices *DeviceRepo
-	// TODO: add in zap logger
 }
 
 // AutoMigrate will automatically migrate the database and correct schema errors on startup

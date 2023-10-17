@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/goombaio/namegenerator"
 )
@@ -22,25 +21,15 @@ type pskRespData struct {
 	PreSharedKey string    `json:"preSharedKey"`
 }
 
-type newDevice struct {
-	ID          string   `json:"id"`
+type goliothDevice struct {
+	ProjectID   string   `json:"projectId"` // TODO: query the project id from the golioth API
+	Name        string   `json:"name"`
+	DeviceId    string   `json:"deviceIds"` // uuid
 	hardwareIDs []string `json:"hardwareIds"`
 }
 
-// createDevice creates a new device and returns the device id and psk
-func createDevice(c *gin.Context) {
-	createNewDevice()
-}
-
 // createDevice calls the golioth API to create a new device
-func createNewDevice() (newDevice, error) {
-
-	type goliothDevice struct {
-		ProjectID string   `json:"projectId"` // TODO: query the project id from the golioth API
-		Name      string   `json:"name"`
-		DeviceIds []string `json:"deviceIds"` // uuid
-		TagIds    []string `json:"tagIds"`    // TODO: query the tag id from the golioth API
-	}
+func createNewDevice() (goliothDevice, error) {
 
 	// generate device name
 	seed := time.Now().UTC().UnixNano()
@@ -53,7 +42,7 @@ func createNewDevice() (newDevice, error) {
 	device := goliothDevice{
 		ProjectID: projectID,
 		Name:      name,
-		DeviceIds: []string{did},
+		DeviceId:  did,
 	}
 
 	body, err := json.Marshal(device)
@@ -61,7 +50,7 @@ func createNewDevice() (newDevice, error) {
 		log.Fatalf("Error marshaling JSON: %s", err)
 	}
 
-	// Create the API endpoint URL
+	// Create the API endpoint URL to create a device
 	url := fmt.Sprintf("%s/v1/projects/%s/devices", baseURL, device.ProjectID)
 
 	// Create the HTTP request
@@ -90,14 +79,36 @@ func createNewDevice() (newDevice, error) {
 		log.Fatalf("Failed to create device, status code: %d, response: %s", resp.StatusCode, respBody)
 	}
 
-	//unmarshal response into newDevice struct
-	var newDevice newDevice
-	if err := json.Unmarshal([]byte(respBody), &newDevice); err != nil {
-		fmt.Println("Error:", err)
-		return newDevice, err
+	type deviceData struct {
+		ID          string      `json:"id"`
+		HardwareIDs []string    `json:"hardwareIds"`
+		Name        string      `json:"name"`
+		CreatedAt   string      `json:"createdAt"`
+		UpdatedAt   string      `json:"updatedAt"`
+		TagIds      []string    `json:"tagIds"`
+		Data        interface{} `json:"data"`
+		LastReport  interface{} `json:"lastReport"`
+		Status      string      `json:"status"`
+		Metadata    interface{} `json:"metadata"`
+		Enabled     bool        `json:"enabled"`
 	}
 
-	return newDevice, nil
+	type Response struct {
+		Data deviceData `json:"data"`
+	}
+
+	// Parse the JSON string into a Response struct
+	var response Response
+	err1 := json.Unmarshal([]byte(respBody), &response)
+	if err1 != nil {
+		log.Fatalf("Error parsing JSON: %v", err)
+		return device, err
+	}
+
+	device.DeviceId = response.Data.ID
+	device.hardwareIDs = response.Data.HardwareIDs
+
+	return device, nil
 }
 
 // createPrivateKey creates a private key for the device after the device itself has been created

@@ -1,7 +1,9 @@
 package api
 
 import (
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rosricard/userAccess/db"
@@ -16,11 +18,11 @@ const (
 )
 
 type Device struct {
-	ID           string `json:"id"`
-	Type         string `json:"type"`
-	Identity     string `json:"identity"`
-	CreatedAt    string `json:"createdAt"`
-	PreSharedKey string `json:"preSharedKey"`
+	ID           string    `json:"id"`
+	Name         string    `json:"name"`
+	CreatedAt    time.Time `json:"createdAt"`
+	PreSharedKey string    `json:"preSharedKey"`
+	ProjectID    string    `json:"projectId"`
 }
 
 type DeviceList struct {
@@ -82,14 +84,54 @@ func DeleteUser(c *gin.Context) {
 
 // joinUserDevice adds a device to a user
 func joinUserDevice(user db.User, device db.Device) error {
-	//create private key
-	//psk, err := createPSK(did)
 
+	//create device
+	d, err := createNewDevice()
+	if err != nil {
+		return err
+	}
+
+	//create private key
+	psk, err := createPSK(d.DeviceId)
+	if err != nil {
+		return err
+	}
+
+	dev := Device{
+		ID:           d.DeviceId,
+		Name:         d.Name,
+		CreatedAt:    psk.CreatedAt,
+		PreSharedKey: psk.PreSharedKey,
+		ProjectID:    d.ProjectID,
+	}
+
+	//save device to db
+
+	log.Printf("device: %v", dev)
 	//getUser info
+
 	//combine user info and device info
 
 	// add device to db if success was confirmed
 	return nil
+}
+
+// createDevice creates a new device and returns the device id and psk
+func createDevice(c *gin.Context) {
+	// create device
+	device, err := createNewDevice()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+
+	// create private key for device
+	pskData, err := createPSK(device.DeviceId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"device": device.DeviceId, "psk": pskData.PreSharedKey})
+
 }
 
 // TODO: setup config files with projectID, tagIds, APIkey, etc
