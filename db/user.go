@@ -12,7 +12,7 @@ type UserDB struct {
 	Name      string `gorm:"column:name"`
 	Email     string `gorm:"column:email"`
 	CreatedAt time.Time
-	Password  string `gorm:"column:password"`
+	Password  string `gorm:"column:password"` //TODO hash password
 }
 
 type UserRepo struct {
@@ -58,4 +58,13 @@ func GetAllUsers() ([]User, error) {
 // DeleteUserByEmail deletes a user from the database identified by email
 func DeleteUserByEmail(email string) error {
 	return db.Delete(&User{}, "email = ?", email).Error
+}
+
+func GetUserByEmail(email string) (User, error) {
+	var user User
+	result := db.First(&user, "email = ?", email)
+	if result.Error != nil {
+		return User{}, result.Error
+	}
+	return user, nil
 }
