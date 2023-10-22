@@ -30,85 +30,6 @@ type DeviceList struct {
 	List []Device `json:"list"`
 }
 
-type activeUser struct {
-	ID        string
-	Name      string
-	Email     string
-	loginTime time.Time
-}
-
-func GetAllUsers(c *gin.Context) {
-	users, err := db.GetAllUsers()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, users)
-}
-
-func DeleteUser(c *gin.Context) {
-	email := c.Param("email")
-
-	if err := db.DeleteUserByEmail(email); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
-}
-
-// joinUserDevice adds a device to a user
-func joinUserDevice(user db.User, device db.Device) error {
-
-	//create device
-	d, err := createNewDevice()
-	if err != nil {
-		return err
-	}
-
-	//create private key
-	psk, err := createPSK(d.DeviceId)
-	if err != nil {
-		return err
-	}
-
-	dev := Device{
-		ID:           d.DeviceId,
-		Name:         d.Name,
-		CreatedAt:    psk.CreatedAt,
-		PreSharedKey: psk.PreSharedKey,
-		ProjectID:    d.ProjectID,
-	}
-
-	//save device to db
-	log.Printf("device: %v", dev)
-	//getUser info
-
-	//combine user info and device info
-
-	// add device to db if success was confirmed
-	return nil
-}
-
-// createDevice creates a new device and returns the device id and psk
-func createDevice(c *gin.Context) {
-	// create device
-	device, err := createNewDevice()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	}
-
-	// create private key for device
-	pskData, err := createPSK(device.DeviceId)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	}
-
-	c.JSON(http.StatusOK, gin.H{"deviceID": device.DeviceId, "psk": pskData.Identity})
-
-}
-
 type Credentials struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
@@ -185,6 +106,78 @@ func Signin(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Login successful"})
+}
+
+func GetAllUsers(c *gin.Context) {
+	users, err := db.GetAllUsers()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, users)
+}
+
+func DeleteUser(c *gin.Context) {
+	email := c.Param("email")
+
+	if err := db.DeleteUserByEmail(email); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
+}
+
+// joinUserDevice adds a device to a user
+func joinUserDevice(user db.User, device db.Device) error {
+
+	//create device
+	d, err := createNewDevice()
+	if err != nil {
+		return err
+	}
+
+	//create private key
+	psk, err := createPSK(d.DeviceId)
+	if err != nil {
+		return err
+	}
+
+	dev := Device{
+		ID:           d.DeviceId,
+		Name:         d.Name,
+		CreatedAt:    psk.CreatedAt,
+		PreSharedKey: psk.PreSharedKey,
+		ProjectID:    d.ProjectID,
+	}
+
+	//save device to db
+	log.Printf("device: %v", dev)
+	//getUser info
+
+	//combine user info and device info
+
+	// add device to db if success was confirmed
+	return nil
+}
+
+// createDevice creates a new device and returns the device id and psk
+func createDevice(c *gin.Context) {
+	// create device
+	device, err := createNewDevice()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+
+	// create private key for device
+	pskData, err := createPSK(device.DeviceId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"deviceID": device.DeviceId, "psk": pskData.Identity})
+
 }
 
 func SetupRouter() *gin.Engine {
