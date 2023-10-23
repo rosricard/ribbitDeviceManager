@@ -4,8 +4,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/sessions"
 	"github.com/rosricard/ribbitDeviceManager/db"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -33,7 +34,7 @@ type Credentials struct {
 }
 
 // Initialize the session store
-var store = sessions.NewCookieStore([]byte("some-secret-key"))
+var store = cookie.NewStore([]byte("secret"))
 
 func Signup(c *gin.Context) {
 	creds := &Credentials{
@@ -135,35 +136,40 @@ func DeleteUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
 }
 
-// addDeviceToUser adds a device to the active user account
-func addDeviceToUser(c *gin.Context) {
+// createNewDevice adds a device to the active user account
+func createNewDevice(c *gin.Context) {
 	// Access the session
 	session, err := store.Get(c.Request, "user-session")
 	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	// Retrieve the active user's email from the session
 	email, ok := session.Values["email"].(string)
 	if !ok {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user email not found in session"})
 		return
 	}
 
 	// Fetch the user details using the email from the session
 	user, err := db.GetUserByEmail(email)
 	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	//create device
-	d, err := createNewDevice()
+	d, err := createGoliothDevice()
 	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	//create private key
 	psk, err := createPSK(d.DeviceId)
 	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -178,6 +184,7 @@ func addDeviceToUser(c *gin.Context) {
 
 	err1 := db.CreateDevice(device)
 	if err1 != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -185,10 +192,10 @@ func addDeviceToUser(c *gin.Context) {
 
 }
 
-// createDevice creates a new device and returns the device id and psk
-func createDevice(c *gin.Context) {
+// createDevice creates a new device in golioth and returns the device id and psk. Does not save to ribbit db
+func createDeviceNoDB(c *gin.Context) {
 	// create device
-	device, err := createNewDevice()
+	device, err := createGoliothDevice()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
@@ -205,16 +212,19 @@ func createDevice(c *gin.Context) {
 
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
+	r.Use(sessions.Sessions("mysession", store))
 
 	r.POST("/signin/:email/:password", Signin)
 	r.POST("/signup/:email/:password", Signup)
-	r.Use(activityMiddleware) // Use the middleware to track active user login status
+	r.Use(activityMiddleware)
+	{
+		r.POST("/createNewDevice", createNewDevice)
+	}
 	r.GET("/getusers", GetAllUsers)
 	r.DELETE("/users/:email", DeleteUser)
-	r.POST("/createDevice", addDeviceToUser)
+	r.POST("/createDeviceGolioth", createDeviceNoDB)
 	return r
 }
 
 // TODO: setup config files with projectID, tagIds, APIkey, etc
-// add device to table
 // TODO: on app startup, run a check against the golioth API to get all devices and compare against the database

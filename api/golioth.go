@@ -29,7 +29,7 @@ type goliothDevice struct {
 }
 
 // createDevice calls the golioth API to create a new device
-func createNewDevice() (goliothDevice, error) {
+func createGoliothDevice() (goliothDevice, error) {
 
 	// generate device name
 	seed := time.Now().UTC().UnixNano()
