@@ -9,7 +9,6 @@ import (
 
 type UserDB struct {
 	ID        string `gorm:"column:id;primary_key"`
-	Name      string `gorm:"column:name"`
 	Email     string `gorm:"column:email"`
 	CreatedAt time.Time
 	Password  string `gorm:"column:password"` //TODO hash password
@@ -20,7 +19,6 @@ type UserRepo struct {
 }
 type User struct {
 	ID       string
-	Name     string
 	Email    string
 	Password string
 }

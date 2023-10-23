@@ -41,20 +41,6 @@ func Signup(c *gin.Context) {
 		Password: c.Param("password"),
 	}
 
-	if err := c.ShouldBindJSON(creds); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad request"})
-		return
-	}
-
-	var userInput struct {
-		ID        string
-		Name      string
-		Email     string
-		Password  string
-		ProjectID string
-		DeviceID  string
-	}
-
 	hashedPasswordBytes, err := bcrypt.GenerateFromPassword([]byte(creds.Password), 8)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error hashing password"})
@@ -63,9 +49,7 @@ func Signup(c *gin.Context) {
 	hashedPassword := string(hashedPasswordBytes)
 
 	user := db.User{
-		ID:       userInput.ID,
-		Name:     userInput.Name,
-		Email:    userInput.Email,
+		Email:    creds.Email,
 		Password: hashedPassword,
 	}
 
