@@ -1,12 +1,12 @@
 package api
 
 import (
-	"log"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/rosricard/userAccess/db"
+	"github.com/gorilla/sessions"
+	"github.com/rosricard/ribbitDeviceManager/db"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -19,21 +19,21 @@ const (
 )
 
 type Device struct {
-	ID           string    `json:"id"`
-	Name         string    `json:"name"`
-	CreatedAt    time.Time `json:"createdAt"`
-	PreSharedKey string    `json:"preSharedKey"`
-	ProjectID    string    `json:"projectId"`
-}
-
-type DeviceList struct {
-	List []Device `json:"list"`
+	ID           string
+	Name         string
+	PreSharedKey string
+	UserID       string
+	ProjectID    string
+	CreatedAt    time.Time
 }
 
 type Credentials struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
+
+// Initialize the session store
+var store = sessions.NewCookieStore([]byte("some-secret-key"))
 
 func Signup(c *gin.Context) {
 	creds := &Credentials{
@@ -57,6 +57,12 @@ func Signup(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	// After successfully creating the user
+	session, _ := store.Get(c.Request, "user-session")
+	session.Values["email"] = creds.Email
+	session.Values["lastActivity"] = time.Now()
+	session.Save(c.Request, c.Writer)
 
 	c.JSON(http.StatusOK, gin.H{"message": "Signup successful"})
 }
@@ -84,7 +90,28 @@ func Signin(c *gin.Context) {
 		return
 	}
 
+	session, _ := store.Get(c.Request, "user-session")
+	session.Values["email"] = creds.Email
+	session.Values["lastActivity"] = time.Now()
+	session.Save(c.Request, c.Writer)
+
 	c.JSON(http.StatusOK, gin.H{"message": "Login successful"})
+}
+
+func activityMiddleware(c *gin.Context) {
+	session, _ := store.Get(c.Request, "user-session")
+	lastActivity, ok := session.Values["lastActivity"].(time.Time)
+
+	if ok && time.Since(lastActivity) <= 15*time.Minute {
+		// Update the last activity time
+		session.Values["lastActivity"] = time.Now()
+		session.Save(c.Request, c.Writer)
+		c.Next()
+	} else {
+		session.Options.MaxAge = -1 // Invalidate session
+		session.Save(c.Request, c.Writer)
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Session expired"})
+	}
 }
 
 func GetAllUsers(c *gin.Context) {
@@ -108,37 +135,54 @@ func DeleteUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
 }
 
-// joinUserDevice adds a device to a user
-func joinUserDevice(user db.User, device db.Device) error {
+// addDeviceToUser adds a device to the active user account
+func addDeviceToUser(c *gin.Context) {
+	// Access the session
+	session, err := store.Get(c.Request, "user-session")
+	if err != nil {
+		return
+	}
+
+	// Retrieve the active user's email from the session
+	email, ok := session.Values["email"].(string)
+	if !ok {
+		return
+	}
+
+	// Fetch the user details using the email from the session
+	user, err := db.GetUserByEmail(email)
+	if err != nil {
+		return
+	}
 
 	//create device
 	d, err := createNewDevice()
 	if err != nil {
-		return err
+		return
 	}
 
 	//create private key
 	psk, err := createPSK(d.DeviceId)
 	if err != nil {
-		return err
+		return
 	}
 
-	dev := Device{
-		ID:           d.DeviceId,
-		Name:         d.Name,
-		CreatedAt:    psk.CreatedAt,
-		PreSharedKey: psk.PreSharedKey,
-		ProjectID:    d.ProjectID,
+	device := db.DeviceDB{
+		DeviceID:   d.DeviceId,
+		DeviceName: d.Name,
+		DevicePSK:  psk.PreSharedKey,
+		UserID:     user.ID,
+		ProjectID:  d.ProjectID,
+		CreatedAt:  psk.CreatedAt,
 	}
 
-	//save device to db
-	log.Printf("device: %v", dev)
-	//getUser info
+	err1 := db.CreateDevice(device)
+	if err1 != nil {
+		return
+	}
 
-	//combine user info and device info
+	c.JSON(http.StatusOK, gin.H{"deviceID": d.DeviceId, "psk": psk.PreSharedKey, "email": email})
 
-	// add device to db if success was confirmed
-	return nil
 }
 
 // createDevice creates a new device and returns the device id and psk
@@ -164,9 +208,10 @@ func SetupRouter() *gin.Engine {
 
 	r.POST("/signin/:email/:password", Signin)
 	r.POST("/signup/:email/:password", Signup)
+	r.Use(activityMiddleware) // Use the middleware to track active user login status
 	r.GET("/getusers", GetAllUsers)
 	r.DELETE("/users/:email", DeleteUser)
-	r.POST("/createDevice", createDevice)
+	r.POST("/createDevice", addDeviceToUser)
 	return r
 }
 

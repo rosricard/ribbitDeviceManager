@@ -4,8 +4,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/rosricard/userAccess/api"
-	"github.com/rosricard/userAccess/db"
+	"github.com/rosricard/ribbitDeviceManager/api"
+	"github.com/rosricard/ribbitDeviceManager/db"
 )
 
 func main() {
