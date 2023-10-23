@@ -67,11 +67,6 @@ func Signin(c *gin.Context) {
 		Password: c.Param("password"),
 	}
 
-	if err := c.ShouldBindJSON(creds); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad request"})
-		return
-	}
-
 	// Get the existing entry present in the database for the given username
 	user, err := db.GetUserByEmail(creds.Email)
 	if err != nil {
