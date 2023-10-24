@@ -36,6 +36,32 @@ type Credentials struct {
 // Initialize the session store
 var store = cookie.NewStore([]byte("secret"))
 
+func init() {
+	store.Options(sessions.Options{
+		MaxAge:   int(15 * 60), // 15 minutes in seconds
+		Path:     "/",
+		HttpOnly: true,
+	})
+}
+
+func sessionExpiryMiddleware(c *gin.Context) {
+	session := sessions.Default(c)
+	lastActivity, found := session.Get("lastActivity").(time.Time)
+
+	if !found || time.Since(lastActivity) > 15*time.Minute {
+		session.Clear()
+		session.Save()
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Session expired"})
+		c.Abort()
+		return
+	}
+
+	// Update the last activity time
+	session.Set("lastActivity", time.Now())
+	session.Save()
+	c.Next()
+}
+
 func Signup(c *gin.Context) {
 	creds := &Credentials{
 		Email:    c.Param("email"),
@@ -59,11 +85,11 @@ func Signup(c *gin.Context) {
 		return
 	}
 
-	// After successfully creating the user
-	session, _ := store.Get(c.Request, "user-session")
-	session.Values["email"] = creds.Email
-	session.Values["lastActivity"] = time.Now()
-	session.Save(c.Request, c.Writer)
+	// After user creation
+	session := sessions.Default(c)
+	session.Set("email", creds.Email)
+	session.Set("lastActivity", time.Now())
+	session.Save()
 
 	c.JSON(http.StatusOK, gin.H{"message": "Signup successful"})
 }
@@ -91,28 +117,13 @@ func Signin(c *gin.Context) {
 		return
 	}
 
-	session, _ := store.Get(c.Request, "user-session")
-	session.Values["email"] = creds.Email
-	session.Values["lastActivity"] = time.Now()
-	session.Save(c.Request, c.Writer)
+	// After successful login
+	session := sessions.Default(c)
+	session.Set("email", creds.Email)
+	session.Set("lastActivity", time.Now())
+	session.Save()
 
 	c.JSON(http.StatusOK, gin.H{"message": "Login successful"})
-}
-
-func activityMiddleware(c *gin.Context) {
-	session, _ := store.Get(c.Request, "user-session")
-	lastActivity, ok := session.Values["lastActivity"].(time.Time)
-
-	if ok && time.Since(lastActivity) <= 15*time.Minute {
-		// Update the last activity time
-		session.Values["lastActivity"] = time.Now()
-		session.Save(c.Request, c.Writer)
-		c.Next()
-	} else {
-		session.Options.MaxAge = -1 // Invalidate session
-		session.Save(c.Request, c.Writer)
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Session expired"})
-	}
 }
 
 func GetAllUsers(c *gin.Context) {
@@ -139,14 +150,10 @@ func DeleteUser(c *gin.Context) {
 // createNewDevice adds a device to the active user account
 func createNewDevice(c *gin.Context) {
 	// Access the session
-	session, err := store.Get(c.Request, "user-session")
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
+	session := sessions.Default(c)
 
 	// Retrieve the active user's email from the session
-	email, ok := session.Values["email"].(string)
+	email, ok := session.Get("email").(string)
 	if !ok {
 		c.JSON(http.StatusNotFound, gin.H{"error": "user email not found in session"})
 		return
@@ -213,13 +220,10 @@ func createDeviceNoDB(c *gin.Context) {
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
 	r.Use(sessions.Sessions("mysession", store))
-
+	r.Use(sessionExpiryMiddleware)
 	r.POST("/signin/:email/:password", Signin)
 	r.POST("/signup/:email/:password", Signup)
-	r.Use(activityMiddleware)
-	{
-		r.POST("/createNewDevice", createNewDevice)
-	}
+	r.POST("/createNewDevice", createNewDevice)
 	r.GET("/getusers", GetAllUsers)
 	r.DELETE("/users/:email", DeleteUser)
 	r.POST("/createDeviceGolioth", createDeviceNoDB)

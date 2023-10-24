@@ -3,7 +3,6 @@ module github.com/rosricard/ribbitDeviceManager
 go 1.19
 
 require (
-	github.com/gin-contrib/sessions v0.0.5
 	golang.org/x/crypto v0.9.0
 	gorm.io/driver/mysql v1.4.7
 )
@@ -37,11 +36,12 @@ require (
 )
 
 require (
+	github.com/gin-contrib/sessions v0.0.5
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-sql-driver/mysql v1.7.0 // indirect
 	github.com/google/uuid v1.3.0
 	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
-	github.com/gorilla/sessions v1.2.1 // indirect
+	github.com/gorilla/sessions v1.2.1
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	gorm.io/gorm v1.24.6
