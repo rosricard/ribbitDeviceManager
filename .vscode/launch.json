@@ -9,7 +9,10 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/cmd/main.go"
+            "program": "${workspaceFolder}/cmd/main.go",
+            "env": {
+                "DSN_ENV": "root:password@tcp(127.0.0.1:3306)/ribbit?charset=utf8mb4&parseTime=True&loc=Local"
+              }
         }
     ]
 }

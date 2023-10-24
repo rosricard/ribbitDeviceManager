@@ -4,6 +4,7 @@ package db
 import (
 	"errors"
 	"log"
+	"os"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -14,7 +15,6 @@ var (
 )
 
 type Repository struct {
-	config  *ConfigRepo
 	users   *UserRepo
 	devices *DeviceRepo
 }
@@ -30,7 +30,6 @@ func NewRepository(db *gorm.DB) (*Repository, error) {
 	}
 
 	return &Repository{
-		config:  NewConfigRepo(db),
 		users:   NewUserRepo(db),
 		devices: NewDeviceRepo(db),
 	}, nil
@@ -38,19 +37,19 @@ func NewRepository(db *gorm.DB) (*Repository, error) {
 
 // ConnectDatabase initalizes the sql database connection and gorm
 func ConnectDatabase() {
-	//TODO: setup db connection as an env variable
-	dsn := "root:password@tcp(127.0.0.1:3306)/ribbit?charset=utf8mb4&parseTime=True&loc=Local"
+	// Read the DSN from the environment variable
+	dsn := os.Getenv("DSN_ENV")
+	if dsn == "" {
+		log.Fatal("DSN_ENV environment variable is not set")
+	}
+
 	var err error
 	db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal("Failed to connect to the database:", err)
 	}
 
-	db.AutoMigrate(&User{}, &Device{}, &Config{})
-}
-
-func (r *Repository) Config() *ConfigRepo {
-	return r.config
+	db.AutoMigrate(&User{}, &Device{})
 }
 
 func (r *Repository) Users() *UserRepo {
