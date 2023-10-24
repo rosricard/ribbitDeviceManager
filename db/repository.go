@@ -14,6 +14,7 @@ var (
 )
 
 type Repository struct {
+	config  *ConfigRepo
 	users   *UserRepo
 	devices *DeviceRepo
 }
@@ -29,6 +30,7 @@ func NewRepository(db *gorm.DB) (*Repository, error) {
 	}
 
 	return &Repository{
+		config:  NewConfigRepo(db),
 		users:   NewUserRepo(db),
 		devices: NewDeviceRepo(db),
 	}, nil
@@ -44,7 +46,11 @@ func ConnectDatabase() {
 		log.Fatal("Failed to connect to the database:", err)
 	}
 
-	db.AutoMigrate(&User{}, &Device{})
+	db.AutoMigrate(&User{}, &Device{}, &Config{})
+}
+
+func (r *Repository) Config() *ConfigRepo {
+	return r.config
 }
 
 func (r *Repository) Users() *UserRepo {

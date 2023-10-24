@@ -6,4 +6,4 @@ const (
 	apiKey    = "R7aJE5qW4DNHJTgy9JpbmZYrFXnRTY8S"
 )
 
-//TODO: query project IDs, apikeys and tagIDs from golioth API
+//TODO: query project IDs, apikeys from golioth API

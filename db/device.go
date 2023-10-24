@@ -15,16 +15,15 @@ type DeviceDB struct {
 	CreatedAt  time.Time
 }
 
-type DeviceRepo struct {
-	db *gorm.DB
-}
-
 type Device struct {
 	GoliothPSKID string
 	GoliothPSK   string
 	UserID       string
 	ProjectID    string
 	CreatedAt    string
+}
+type DeviceRepo struct {
+	db *gorm.DB
 }
 
 // TableName sets the table name for the DeviceDB model
