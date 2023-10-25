@@ -224,9 +224,8 @@ func SetupRouter() *gin.Engine {
 	r.POST("/signin/:email/:password", Signin)
 	r.POST("/signup/:email/:password", Signup)
 	r.POST("/createNewDevice", createNewDevice)
-	r.GET("/getusers", GetAllUsers)
 	r.DELETE("/users/:email", DeleteUser)
-	r.POST("/createDeviceGolioth", createDeviceNoDB)
+	r.POST("/createDeviceGolioth", createDeviceNoDB) // Used exclusively for testing
 	return r
 }
 
