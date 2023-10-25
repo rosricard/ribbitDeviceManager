@@ -13,9 +13,9 @@ import (
 )
 
 var (
-	projectID = os.Getenv("RIBBIT_PROJECT_ID")
+	projectID = os.Getenv("GOLIOTH_PROJECT_ID")
 	baseURL   = "https://api.golioth.io"
-	apiKey    = os.Getenv("RIBBIT_API_KEY")
+	apiKey    = os.Getenv("GOLIOTH_API_KEY")
 )
 
 type Device struct {
@@ -218,8 +218,9 @@ func createDeviceNoDB(c *gin.Context) {
 
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
-	r.Use(sessions.Sessions("mysession", store))
-	r.Use(sessionExpiryMiddleware)
+	// TODO: resolve session manager bug
+	// r.Use(sessions.Sessions("mysession", store))
+	// r.Use(sessionExpiryMiddleware)
 	r.POST("/signin/:email/:password", Signin)
 	r.POST("/signup/:email/:password", Signup)
 	r.POST("/createNewDevice", createNewDevice)

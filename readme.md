@@ -1,4 +1,8 @@
-note that you'll need to set the following env variables in your launch.json and/or trigger in your bash or docker environment depending on what your using to be able to run the application to run locally:
--dbconn. ie `export DSN_ENV="root:password@tcp(127.0.0.1:3306)/ribbit?charset=utf8mb4&parseTime=True&loc=Local"`
--projectID
--apikey
+## Ribbit Fleet Manager
+Current functionality is user and device associations. As this is an open source project, we gladly welcome any new developers to help us expand current functinoality. This app queries the Golioth REST APIs (reference docs available on their [website](https://docs.golioth.io/reference))
+
+## Getting Started
+To run the app locally, you'll need a MySQL server and you'll need to configure the following three environment variables:
+-"DB_CONN"
+-"GOLIOTH_PROJECT_ID"
+-"GOLIOTH_API_KEY"
