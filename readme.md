@@ -12,3 +12,5 @@ To run the app locally, you'll need a MySQL server and you'll need to configure 
 * `POST /signin/:email/:password`
 * `POST /createNewDevice`
 * `DELETE /users/:email`
+* For developer testing only: `POST /createDeviceGolioth`
+    * It creates a device directly in the golioth account without associating it to a user
