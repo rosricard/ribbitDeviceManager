@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-contrib/sessions"
@@ -13,10 +14,10 @@ import (
 
 //TODO: store config in db a json string, create config file to handle creation and parsing of these details
 
-const (
-	projectID = "ribbit-test-569244"
+var (
+	projectID = os.Getenv("RIBBIT_PROJECT_ID")
 	baseURL   = "https://api.golioth.io"
-	apiKey    = "R7aJE5qW4DNHJTgy9JpbmZYrFXnRTY8S"
+	apiKey    = os.Getenv("RIBBIT_API_KEY")
 )
 
 type Device struct {
