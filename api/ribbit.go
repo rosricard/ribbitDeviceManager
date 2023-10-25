@@ -12,8 +12,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-//TODO: store config in db a json string, create config file to handle creation and parsing of these details
-
 var (
 	projectID = os.Getenv("RIBBIT_PROJECT_ID")
 	baseURL   = "https://api.golioth.io"
@@ -231,5 +229,4 @@ func SetupRouter() *gin.Engine {
 	return r
 }
 
-// TODO: setup config files with projectID, tagIds, APIkey, etc
 // TODO: on app startup, run a check against the golioth API to get all devices and compare against the database
