@@ -3,6 +3,7 @@ Current functionality is user and device associations. As this is an open source
 
 ## Getting Started
 To run the app locally, you'll need a MySQL server and you'll need to configure the following three environment variables:
--"DB_CONN"
--"GOLIOTH_PROJECT_ID"
--"GOLIOTH_API_KEY"
+
+*"DB_CONN"
+*"GOLIOTH_PROJECT_ID"
+*"GOLIOTH_API_KEY"
